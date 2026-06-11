@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ServoLearn — Aprende Servomotores</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple: #7C3AED;
+  --purple-light: #EDE9FE;
+  --purple-dark: #5B21B6;
+  --green: #65A30D;
+  --green-light: #ECFCCB;
+  --amber: #D97706;
+  --amber-light: #FEF3C7;
+  --coral: #E11D48;
+  --coral-light: #FFE4E6;
+  --bg: #F9FAFB;
+  --surface: #FFFFFF;
+  --border: rgba(0,0,0,0.10);
+  --text: #111827;
+  --text-muted: #6B7280;
+  --text-hint: #9CA3AF;
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0F0F18;
+    --surface: #1A1A2E;
+    --border: rgba(255,255,255,0.10);
+    --text: #F9FAFB;
+    --text-muted: #9CA3AF;
+    --text-hint: #6B7280;
+    --purple-light: #2D1B69;
+    --green-light: #14301A;
+    --amber-light: #2D1A00;
+    --coral-light: #3B0E20;
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.app-wrap {
+  width: 100%;
+  max-width: 430px;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.screen { display: none; flex: 1; overflow-y: auto; padding-bottom: 70px; }
+.screen.active { display: block; }
+
+/* ─── HOME ─── */
+.home-hero {
+  text-align: center;
+  padding: 2.5rem 1.5rem 1.5rem;
+}
+
+.mascot-wrap {
+  width: 100px; height: 100px;
+  margin: 0 auto 1.25rem;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.servo-body-sm {
+  width: 64px; height: 54px;
+  background: var(--purple);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.servo-eye { width: 18px; height: 18px; border-radius: 50%; background: white; }
+.servo-arm-sm {
+  position: absolute; bottom: -16px; left: 50%;
+  width: 42px; height: 9px;
+  background: #84CC16; border-radius: 5px;
+  transform-origin: 5px 4px;
+  transform: translateX(-5px) rotate(-40deg);
+  animation: arm-pulse 2.4s ease-in-out infinite;
+}
+@keyframes arm-pulse {
+  0%   { transform: translateX(-5px) rotate(-40deg); }
+  50%  { transform: translateX(-5px) rotate(50deg); }
+  100% { transform: translateX(-5px) rotate(-40deg); }
+}
+.servo-cables {
+  position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 5px;
+}
+.cable { width: 5px; height: 18px; border-radius: 2px; }
+
+.home-title { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+.home-sub { font-size: 15px; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; }
+
+.streak-section { text-align: center; margin-bottom: 1rem; }
+.streak-title { font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+.streak-days { display: flex; gap: 8px; justify-content: center; }
+.streak-day {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+}
+.streak-day.done { background: var(--amber); border-color: var(--amber); color: white; }
+.streak-day.today { border-color: var(--purple); color: var(--purple); }
+
+.xp-row { display: flex; justify-content: center; gap: 10px; margin: 1rem 0 1.5rem; flex-wrap: wrap; }
+.xp-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+}
+.xp-chip.amber { background: var(--amber-light); color: var(--amber); }
+.xp-chip.purple { background: var(--purple-light); color: var(--purple); }
+
+.home-btns { padding: 0 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 10px; }
+
+.btn-main {
+  display: block; width: 100%;
+  background: var(--purple); color: white;
+  border: none; border-radius: var(--radius);
+  padding: 15px; font-size: 16px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  font-family: inherit; letter-spacing: 0.02em;
+}
+.btn-main:hover { opacity: 0.90; }
+.btn-main:active { transform: scale(0.98); }
+
+.btn-outline {
+  display: block; width: 100%;
+  background: transparent; color: var(--purple);
+  border: 2px solid var(--purple); border-radius: var(--radius);
+  padding: 13px; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+  font-family: inherit;
+}
+.btn-outline:hover { background: var(--purple-light); }
+
+/* ─── MAP ─── */
+.page-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 1rem 1.25rem 0.75rem;
+  position: sticky; top: 0;
+  background: var(--bg); z-index: 10;
+  border-bottom: 1px solid var(--border);
+}
+.page-title { font-size: 18px; font-weight: 700; }
+.header-badge {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 5px;
+  background: var(--amber-light); color: var(--amber);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 13px; font-weight: 700;
+}
+
+.back-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 20px;
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.back-btn:hover { background: var(--purple-light); color: var(--purple); }
+
+.level-map { padding: 1rem 1.25rem; }
+.level-group { margin-bottom: 1.75rem; }
+.level-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+  color: var(--text-muted); margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.lesson-card-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 13px 15px; margin-bottom: 9px;
+  cursor: pointer; transition: all 0.15s;
+  position: relative;
+}
+.lesson-card-item:hover:not(.locked) { border-color: var(--purple); background: var(--purple-light); }
+.lesson-card-item.done { border-color: var(--green); }
+.lesson-card-item.locked { opacity: 0.48; cursor: default; }
+
+.lesson-icon-box {
+  width: 46px; height: 46px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.icon-purple { background: var(--purple-light); }
+.icon-amber  { background: var(--amber-light); }
+.icon-green  { background: var(--green-light); }
+
+.lesson-info { flex: 1; min-width: 0; }
+.lesson-title { font-size: 14px; font-weight: 700; }
+.lesson-desc  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.lesson-status-icon { font-size: 18px; flex-shrink: 0; }
+
+/* ─── LESSON ─── */
+.lesson-wrap { padding: 1rem 1.25rem; }
+.lesson-top {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;
+}
+.progress-track {
+  flex: 1; height: 9px;
+  background: var(--border); border-radius: 5px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--green);
+  border-radius: 5px; transition: width 0.4s ease;
+}
+.step-counter { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+.card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem; margin-bottom: 1rem;
+}
+.card-type {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--purple); margin-bottom: 10px;
+}
+.card-q { font-size: 17px; font-weight: 700; margin-bottom: 1rem; line-height: 1.4; }
+.card-body { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+.card-body .line { display: block; margin-bottom: 4px; }
+
+.info-visual {
+  text-align: center; padding: 1.25rem 0 1.5rem;
+}
+.servo-display {
+  display: inline-block;
+  background: var(--purple-light);
+  border-radius: 18px; padding: 1.25rem 2rem;
+}
+.servo-d-body {
+  width: 86px; height: 72px;
+  background: var(--purple);
+  border-radius: 14px;
+  margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.servo-d-eye { width: 22px; height: 22px; border-radius: 50%; background: white; }
+.servo-d-arm {
+  position: absolute; bottom: -13px; left: 50%;
+  width: 52px; height: 11px;
+  background: #84CC16; border-radius: 6px;
+  transform-origin: 6px 6px;
+  transform: translateX(-6px) rotate(-45deg);
+  animation: info-arm 1.2s ease-in-out infinite alternate;
+}
+@keyframes info-arm {
+  from { transform: translateX(-6px) rotate(-45deg); }
+  to   { transform: translateX(-6px) rotate(45deg); }
+}
+
+.quiz-opts { display: flex; flex-direction: column; gap: 9px; margin-top: 0.75rem; }
+.quiz-opt {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 13px 15px;
+  cursor: pointer; font-size: 14px; font-weight: 600;
+  color: var(--text); text-align: left;
+  font-family: inherit; transition: all 0.15s;
+  display: flex; align-items: center; gap: 10px;
+}
+.quiz-opt:hover { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+.quiz-opt.correct { border-color: var(--green); background: var(--green-light); color: var(--green); }
+.quiz-opt.wrong   { border-color: var(--coral); background: var(--coral-light); color: var(--coral); }
+
+.opt-letter {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--border); display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+
+.feedback {
+  border-radius: var(--radius); padding: 13px 15px;
+  font-size: 14px; font-weight: 600;
+  margin-top: 10px; display: none;
+}
+.feedback.correct { background: var(--green-light); color: var(--green); border: 1.5px solid var(--green); display: flex; gap: 8px; align-items: flex-start; }
+.feedback.wrong   { background: var(--coral-light); color: var(--coral); border: 1.5px solid var(--coral); display: flex; gap: 8px; align-items: flex-start; }
+
+/* ─── SIMULATOR ─── */
+.sim-wrap { padding: 1rem 1.25rem; }
+
+.sim-servo-stage {
+  text-align: center;
+  padding: 1.5rem 0 2.5rem;
+  position: relative;
+}
+.sim-body {
+  width: 110px; height: 88px;
+  background: var(--purple);
+  border-radius: 16px;
+  margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.sim-body-eye { width: 26px; height: 26px; border-radius: 50%; background: white; }
+.sim-pivot {
+  position: absolute; bottom: -14px; left: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: white; border: 4px solid var(--purple-light);
+  transform: translateX(-50%); z-index: 2;
+}
+.sim-arm {
+  position: absolute; bottom: -7px; left: 50%;
+  width: 76px; height: 13px;
+  background: #84CC16; border-radius: 7px;
+  transform-origin: 7px 7px;
+  transform: translateX(-7px) rotate(0deg);
+  transition: transform 0.18s ease;
+  z-index: 1;
+}
+.sim-arm-label {
+  position: absolute; right: -6px; top: -9px;
+  font-size: 12px; font-weight: 700; color: var(--green);
+  background: var(--green-light); border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.angle-big {
+  font-size: 36px; font-weight: 700;
+  color: var(--purple); text-align: center; margin: 0.5rem 0;
+}
+.angle-big span { font-size: 18px; color: var(--text-muted); }
+
+.slider-row {
+  display: flex; align-items: center; gap: 12px; margin: 0.75rem 0;
+}
+.slider-end { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.slider-row input[type=range] {
+  flex: 1; -webkit-appearance: none; height: 6px;
+  border-radius: 3px; background: var(--border);
+  outline: none; cursor: pointer;
+}
+.slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--purple);
+  border: 3px solid white; box-shadow: 0 2px 6px rgba(124,58,237,0.35);
+  cursor: pointer;
+}
+
+.pwm-chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.pwm-chip {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 9px; padding: 7px 13px;
+  font-size: 12px; color: var(--text-muted);
+}
+.pwm-chip strong { color: var(--text); }
+
+.tip-card {
+  background: var(--purple-light);
+  border: 1.5px solid var(--purple);
+  border-radius: var(--radius); padding: 14px;
+  margin-top: 1rem;
+}
+.tip-card-label { font-size: 12px; font-weight: 700; color: var(--purple); margin-bottom: 5px; }
+.tip-card-text { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+
+/* ─── PROFILE ─── */
+.profile-wrap { padding: 1rem 1.25rem; }
+.profile-top { text-align: center; padding: 1.5rem 0 1rem; }
+.avatar-big {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--purple); color: white;
+  font-size: 32px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 0.75rem;
+  border: 4px solid var(--purple-light);
+}
+.profile-name-big { font-size: 20px; font-weight: 700; }
+.profile-level-tag {
+  display: inline-block; margin-top: 6px;
+  background: var(--purple-light); color: var(--purple);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 12px; font-weight: 700;
+}
+
+.stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; margin: 1.25rem 0; }
+.stat-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 8px; text-align: center;
+}
+.stat-big { font-size: 24px; font-weight: 700; }
+.stat-sm { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 600; }
+
+.xp-progress-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem;
+}
+.xp-progress-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.xp-progress-label { font-size: 13px; font-weight: 700; }
+.xp-progress-val { font-size: 13px; color: var(--purple); font-weight: 700; }
+.xp-track { height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+.xp-fill { height: 100%; background: var(--purple); border-radius: 5px; width: 48%; }
+
+.badges-wrap { margin-bottom: 1.5rem; }
+.badges-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+.badges-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.badge-box {
+  width: 60px; height: 60px; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 26px; border: 2px solid var(--border);
+  background: var(--surface);
+}
+.badge-box.earned { border-color: var(--amber); background: var(--amber-light); }
+.badge-box.locked { opacity: 0.35; filter: grayscale(1); }
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.nav-item {
+  flex: 1; background: none; border: none; cursor: pointer;
+  padding: 9px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  font-family: inherit; transition: color 0.15s;
+}
+.nav-item i { font-size: 22px; }
+.nav-item.active { color: var(--purple); }
+.nav-item:hover { color: var(--purple); }
+
+/* ─── TOAST / XP POP ─── */
+.toast-msg {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-10px);
+  background: #1F2937; color: white;
+  border-radius: 12px; padding: 11px 22px;
+  font-size: 14px; font-weight: 600;
+  z-index: 200; opacity: 0; pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  white-space: nowrap;
+}
+.toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.xp-pop-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.xp-pop-overlay.show { opacity: 1; }
+.xp-pop-box {
+  background: var(--amber); color: white;
+  border-radius: 20px; padding: 2rem 2.5rem; text-align: center;
+  transform: scale(0.8); transition: transform 0.25s;
+}
+.xp-pop-overlay.show .xp-pop-box { transform: scale(1); }
+.xp-num { font-size: 48px; font-weight: 700; }
+.xp-label { font-size: 15px; opacity: 0.9; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="app-wrap">
+
+  <!-- ═══════════ HOME ═══════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="home-hero">
+      <div class="mascot-wrap">
+        <div class="servo-body-sm">
+          <div class="servo-cables">
+            <div class="cable" style="background:#F87171;"></div>
+            <div class="cable" style="background:#4ADE80;"></div>
+            <div class="cable" style="background:#FACC15;"></div>
+          </div>
+          <div class="servo-eye"></div>
+          <div class="servo-arm-sm"></div>
+        </div>
+      </div>
+      <h1 class="home-title">¡ServoLearn!</h1>
+      <p class="home-sub">Aprende cómo funcionan los servomotores<br>paso a paso, de forma divertida.</p>
+
+      <div class="streak-section">
+        <div class="streak-title">🔥 3 días de racha</div>
+        <div class="streak-days">
+          <div class="streak-day done">L</div>
+          <div class="streak-day done">M</div>
+          <div class="streak-day done">M</div>
+          <div class="streak-day today">J</div>
+          <div class="streak-day">V</div>
+          <div class="streak-day">S</div>
+          <div class="streak-day">D</div>
+        </div>
+      </div>
+
+      <div class="xp-row">
+        <div class="xp-chip amber">⚡ 240 XP totales</div>
+        <div class="xp-chip purple">🏅 Nivel 2</div>
+      </div>
+    </div>
+
+    <div class="home-btns">
+      <button class="btn-main" onclick="navTo('map')">Continuar aprendiendo →</button>
+      <button class="btn-outline" onclick="navTo('sim')">🎮 Abrir simulador</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ MAP ═══════════ -->
+  <div class="screen" id="screen-map">
+    <div class="page-header">
+      <span class="page-title">Lecciones</span>
+      <div class="header-badge">⚡ 240 XP</div>
+    </div>
+
+    <div class="level-map">
+      <!-- Nivel 1 -->
+      <div class="level-group">
+        <div class="level-badge">⚙️ Nivel 1 — Fundamentos</div>
+
+        <div class="lesson-card-item done" onclick="startLesson(0)">
+          <div class="lesson-icon-box icon-purple">⚙️</div>
+          <div class="lesson-info">
+            <div class="lesson-title">¿Qué es un servomotor?</div>
+            <div class="lesson-desc">Conoce este motor de precisión</div>
+          </div>
+          <div class="lesson-status-icon">✅</div>
+        </div>
+
+        <div class="lesson-card-item" onclick="startLesson(1)">
+          <div class="lesson-icon-box icon-purple">🎯</div>
+          <div class="lesson-info">
+            <div class="lesson-title">¿Para qué sirve?</div>
+            <div class="lesson-desc">Usos en robótica y electrónica</div>
+          </div>
+          <div class="lesson-status-icon">▶</div>
+        </div>
+
+        <div class="lesson-card-item" onclick="startLesson(2)">
+          <div class="lesson-icon-box icon-purple">🔄</div>
+          <div class="lesson-info">
+            <div class="lesson-title">¿Cómo se mueve?</div>
+            <div class="lesson-desc">El brazo y los ángulos</div>
+          </div>
+          <div class="lesson-status-icon">▶</div>
+        </div>
+      </div>
+
+      <!-- Nivel 2 -->
+      <div class="level-group">
+        <div class="level-badge">📡 Nivel 2 — Control</div>
+
+        <div class="lesson-card-item locked">
+          <div class="lesson-icon-box icon-amber">📐</div>
+          <div class="lesson-info">
+            <div class="lesson-title">¿Qué es el ángulo?</div>
+            <div class="lesson-desc">De 0° a 180° paso a paso</div>
+          </div>
+          <div class="lesson-status-icon">🔒</div>
+        </div>
+
+        <div class="lesson-card-item locked">
+          <div class="lesson-icon-box icon-amber">📡</div>
+          <div class="lesson-info">
+            <div class="lesson-title">¿Qué es PWM?</div>
+            <div class="lesson-desc">La señal mágica del servo</div>
+          </div>
+          <div class="lesson-status-icon">🔒</div>
+        </div>
+
+        <div class="lesson-card-item locked">
+          <div class="lesson-icon-box icon-amber">🎛️</div>
+          <div class="lesson-info">
+            <div class="lesson-title">Control básico</div>
+            <div class="lesson-desc">Arduino y tu primer código</div>
+          </div>
+          <div class="lesson-status-icon">🔒</div>
+        </div>
+      </div>
+
+      <!-- Nivel 3 -->
+      <div class="level-group">
+        <div class="level-badge">🤖 Nivel 3 — Proyectos</div>
+
+        <div class="lesson-card-item locked">
+          <div class="lesson-icon-box icon-green">🦾</div>
+          <div class="lesson-info">
+            <div class="lesson-title">Brazo robótico básico</div>
+            <div class="lesson-desc">Tu primer proyecto real</div>
+          </div>
+          <div class="lesson-status-icon">🔒</div>
+        </div>
+
+        <div class="lesson-card-item locked">
+          <div class="lesson-icon-box icon-green">🚪</div>
+          <div class="lesson-info">
+            <div class="lesson-title">Puerta automática</div>
+            <div class="lesson-desc">Un servo controla tu puerta</div>
+          </div>
+          <div class="lesson-status-icon">🔒</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ LESSON ═══════════ -->
+  <div class="screen" id="screen-lesson">
+    <div class="lesson-wrap">
+      <div class="lesson-top">
+        <button class="back-btn" onclick="navTo('map')" aria-label="Cerrar lección">✕</button>
+        <div class="progress-track">
+          <div class="progress-fill" id="lesson-prog"></div>
+        </div>
+        <span class="step-counter" id="step-counter">1/4</span>
+      </div>
+      <div id="lesson-content"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SIMULATOR ═══════════ -->
+  <div class="screen" id="screen-sim">
+    <div class="page-header">
+      <span class="page-title">Simulador de Servo</span>
+    </div>
+    <div class="sim-wrap">
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-type">🎮 Interactivo</div>
+        <p style="font-size:14px;color:var(--text-muted);margin-bottom:1.25rem;">Mueve el control para ver cómo gira el brazo del servo en tiempo real.</p>
+
+        <div class="sim-servo-stage">
+          <div class="sim-body">
+            <div class="sim-body-eye"></div>
+            <div class="sim-pivot"></div>
+            <div class="sim-arm" id="sim-arm">
+              <span class="sim-arm-label" id="arm-label">90°</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="angle-big" id="angle-display">90<span>°</span></div>
+
+        <div class="slider-row">
+          <span class="slider-end">0°</span>
+          <input type="range" min="0" max="180" value="90" step="1" id="sim-slider" oninput="updateSim(this.value)">
+          <span class="slider-end">180°</span>
+        </div>
+
+        <div class="pwm-chips">
+          <div class="pwm-chip">Pulso: <strong id="pwm-pulse">1500 µs</strong></div>
+          <div class="pwm-chip">Frecuencia: <strong>50 Hz</strong></div>
+          <div class="pwm-chip">Posición: <strong id="pwm-pos">Centro</strong></div>
+        </div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-card-label">💡 Dato curioso</div>
+        <div class="tip-card-text" id="sim-tip">En 90° el servo está en posición central. El pulso dura 1500 µs. Perfecto como posición de inicio.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PROFILE ═══════════ -->
+  <div class="screen" id="screen-profile">
+    <div class="page-header">
+      <span class="page-title">Mi Perfil</span>
+    </div>
+    <div class="profile-wrap">
+      <div class="profile-top">
+        <div class="avatar-big">⚙️</div>
+        <div class="profile-name-big">Servo Explorer</div>
+        <div class="profile-level-tag">Nivel 2 — Principiante Curioso</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-big" style="color:var(--amber);">🔥 3</div>
+          <div class="stat-sm">Racha</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-big">240</div>
+          <div class="stat-sm">XP Total</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-big">4</div>
+          <div class="stat-sm">Lecciones</div>
+        </div>
+      </div>
+
+      <div class="xp-progress-card">
+        <div class="xp-progress-row">
+          <span class="xp-progress-label">Progreso al Nivel 3</span>
+          <span class="xp-progress-val">240 / 500 XP</span>
+        </div>
+        <div class="xp-track"><div class="xp-fill"></div></div>
+      </div>
+
+      <div class="badges-wrap">
+        <div class="badges-label">Logros Obtenidos</div>
+        <div class="badges-grid">
+          <div class="badge-box earned" title="Primera lección">🎯</div>
+          <div class="badge-box earned" title="3 días seguidos">🔥</div>
+          <div class="badge-box earned" title="Quiz perfecto">⭐</div>
+          <div class="badge-box locked" title="Completa el Nivel 2">🤖</div>
+          <div class="badge-box locked" title="Usa el simulador 10 veces">🎮</div>
+          <div class="badge-box locked" title="Maestro del servo">🏆</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ BOTTOM NAV ═══════════ -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="navTo('home')">
+      <i class="ti ti-home"></i>Inicio
+    </button>
+    <button class="nav-item" id="nav-map" onclick="navTo('map')">
+      <i class="ti ti-layout-list"></i>Lecciones
+    </button>
+    <button class="nav-item" id="nav-sim" onclick="navTo('sim')">
+      <i class="ti ti-adjustments-horizontal"></i>Simulador
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="navTo('profile')">
+      <i class="ti ti-user"></i>Perfil
+    </button>
+  </nav>
+</div>
+
+<!-- TOAST -->
+<div class="toast-msg" id="toast"></div>
+
+<!-- XP POP -->
+<div class="xp-pop-overlay" id="xp-overlay" onclick="this.classList.remove('show')">
+  <div class="xp-pop-box">
+    <div class="xp-num">+20 XP</div>
+    <div class="xp-label">¡Respuesta correcta!</div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───
+const lessons = [
+  {
+    title: "¿Qué es un servomotor?",
+    steps: [
+      {
+        type: "info",
+        title: "Conoce al servo",
+        showVisual: true,
+        lines: [
+          "Un servomotor es un motor que puede moverse a un ángulo exacto... ¡y quedarse ahí!",
+          "No gira completo como un ventilador. Se detiene justo donde tú quieres.",
+          "Por eso se usa en robótica, drones y muchos gadgets tecnológicos."
+        ]
+      },
+      {
+        type: "info",
+        title: "Sus 3 cables de colores",
+        showVisual: false,
+        lines: [
+          "🔴 Cable rojo → Energía (alimentación 5V)",
+          "⚫ Cable negro → Tierra (GND)",
+          "🟡 Cable amarillo → Señal de control"
+        ]
+      },
+      {
+        type: "quiz",
+        question: "¿Cuántos cables tiene un servo?",
+        options: ["Solo 1 cable", "2 cables", "3 cables", "5 cables"],
+        correct: 2,
+        okText: "¡Exacto! Rojo (energía), Negro (tierra) y Amarillo (señal). Los 3 juntos.",
+        failText: "Recuerda: el servo tiene 3 cables. Rojo, negro y amarillo/naranja."
+      },
+      {
+        type: "quiz",
+        question: "¿Un servo puede quedarse fijo en un ángulo?",
+        options: ["Sí, esa es su función principal", "No, solo gira sin parar", "Solo en algunos modelos"],
+        correct: 0,
+        okText: "¡Correcto! El servo se posiciona con mucha precisión. Por eso es ideal en robótica.",
+        failText: "¡Sí puede! Esa es la magia del servo — se queda justo donde lo programas."
+      }
+    ]
+  },
+  {
+    title: "¿Para qué sirve?",
+    steps: [
+      {
+        type: "info",
+        title: "El servo en el mundo real",
+        showVisual: false,
+        lines: [
+          "Los servos están en todas partes:",
+          "🤖 Brazos robóticos industriales",
+          "✈️ Aviones y drones de control remoto",
+          "🦾 Prótesis y exoesqueletos",
+          "🚗 Dirección de autos RC",
+          "🖨️ Impresoras y máquinas CNC"
+        ]
+      },
+      {
+        type: "quiz",
+        question: "¿Cuál de estos aparatos usa un servo?",
+        options: ["Una bombilla LED", "Un brazo robótico", "Una batería 9V", "Un cable HDMI"],
+        correct: 1,
+        okText: "¡Sí! Los brazos robóticos usan varios servos para hacer movimientos precisos.",
+        failText: "El brazo robótico usa servos. Los otros son partes eléctricas sin movimiento."
+      },
+      {
+        type: "quiz",
+        question: "¿Por qué se usan servos en drones?",
+        options: ["Para hacer ruido", "Para controlar las aletas con precisión", "Para cargar la batería"],
+        correct: 1,
+        okText: "¡Correcto! Los servos controlan las aletas con movimientos exactos para guiar el drone.",
+        failText: "Se usan para controlar la dirección del drone con movimientos precisos."
+      }
+    ]
+  },
+  {
+    title: "¿Cómo se mueve?",
+    steps: [
+      {
+        type: "info",
+        title: "El rango de movimiento",
+        showVisual: true,
+        lines: [
+          "Un servo estándar se mueve entre 0° y 180°.",
+          "0° = máximo a la izquierda",
+          "90° = posición central",
+          "180° = máximo a la derecha",
+          "¡Puedes decirle exactamente a qué ángulo ir!"
+        ]
+      },
+      {
+        type: "quiz",
+        question: "¿Cuál es el rango de un servo estándar?",
+        options: ["0° a 90°", "0° a 180°", "0° a 360°", "Solo puede ir a 45°"],
+        correct: 1,
+        okText: "¡Perfecto! De 0° a 180°. Eso le da mucha libertad de movimiento.",
+        failText: "El rango estándar es 0° a 180°. Usa el simulador para verlo en acción."
+      },
+      {
+        type: "quiz",
+        question: "¿En qué ángulo está el servo en posición central?",
+        options: ["0°", "45°", "90°", "180°"],
+        correct: 2,
+        okText: "¡Exacto! 90° es el centro exacto entre 0° y 180°. Es el punto de inicio ideal.",
+        failText: "El centro es 90°. Es el punto medio entre 0° y 180°."
+      }
+    ]
+  }
+];
+
+// ─── STATE ───
+let currentScreen = 'home';
+let currentLesson = 0;
+let currentStep = 0;
+let answered = false;
+
+// ─── NAVIGATION ───
+function navTo(tab) {
+  const map = { home:'screen-home', map:'screen-map', sim:'screen-sim', profile:'screen-profile' };
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(map[tab]).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const nav = document.getElementById('nav-' + tab);
+  if (nav) nav.classList.add('active');
+  currentScreen = tab;
+}
+
+function startLesson(idx) {
+  currentLesson = idx;
+  currentStep = 0;
+  answered = false;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-lesson').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  renderStep();
+}
+
+// ─── LESSON RENDER ───
+function renderStep() {
+  const lesson = lessons[currentLesson];
+  const step = lesson.steps[currentStep];
+  const total = lesson.steps.length;
+  const pct = Math.round(((currentStep + 1) / total) * 100);
+
+  document.getElementById('lesson-prog').style.width = pct + '%';
+  document.getElementById('step-counter').textContent = (currentStep + 1) + '/' + total;
+
+  answered = false;
+  let html = '';
+
+  if (step.type === 'info') {
+    const linesHtml = step.lines.map(l => `<span class="line">${l}</span>`).join('');
+    const visualHtml = step.showVisual ? `
+      <div class="info-visual">
+        <div class="servo-display">
+          <div class="servo-d-body">
+            <div class="servo-d-eye"></div>
+            <div class="servo-d-arm"></div>
+          </div>
+        </div>
+      </div>` : '';
+    html = `
+      <div class="card">
+        <div class="card-type">📖 Aprende</div>
+        <div class="card-q">${step.title}</div>
+        ${visualHtml}
+        <div class="card-body">${linesHtml}</div>
+      </div>
+      <button class="btn-main" onclick="nextStep()">Entendido →</button>
+    `;
+  } else if (step.type === 'quiz') {
+    const letters = ['A','B','C','D'];
+    const optsHtml = step.options.map((o, i) => `
+      <button class="quiz-opt" id="opt-${i}" onclick="pick(${i}, ${step.correct})">
+        <span class="opt-letter">${letters[i]}</span>${o}
+      </button>`).join('');
+    html = `
+      <div class="card">
+        <div class="card-type">❓ Pregunta</div>
+        <div class="card-q">${step.question}</div>
+        <div class="quiz-opts">${optsHtml}</div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+      <button class="btn-main" id="continue-btn" style="display:none;" onclick="nextStep()">Continuar →</button>
+    `;
+  }
+
+  document.getElementById('lesson-content').innerHTML = html;
+}
+
+function pick(idx, correct) {
+  if (answered) return;
+  answered = true;
+  const step = lessons[currentLesson].steps[currentStep];
+  const opts = document.querySelectorAll('.quiz-opt');
+  const fb = document.getElementById('feedback');
+  const isOk = idx === correct;
+
+  opts[idx].classList.add(isOk ? 'correct' : 'wrong');
+  if (!isOk) opts[correct].classList.add('correct');
+
+  if (fb) {
+    fb.className = 'feedback ' + (isOk ? 'correct' : 'wrong');
+    fb.innerHTML = isOk
+      ? `<span>✅</span><span>${step.okText}</span>`
+      : `<span>❌</span><span>${step.failText}</span>`;
+  }
+  if (isOk) showXP();
+  const btn = document.getElementById('continue-btn');
+  if (btn) btn.style.display = 'block';
+}
+
+function nextStep() {
+  const lesson = lessons[currentLesson];
+  currentStep++;
+  if (currentStep >= lesson.steps.length) {
+    showToast('🎉 ¡Lección completada! +20 XP');
+    setTimeout(() => navTo('map'), 1600);
+  } else {
+    renderStep();
+  }
+}
+
+// ─── SIMULATOR ───
+const tips = {
+  0:   'En 0° el servo está al máximo hacia un lado. El pulso es muy corto: ~500 µs.',
+  45:  '45° es un cuarto de vuelta. Ideal para posiciones intermedias en brazos.',
+  90:  'En 90° el servo está centrado. El pulso dura 1500 µs. Es el punto de inicio ideal.',
+  135: '135° está casi al límite derecho. Los brazos robóticos llegan aquí al extenderse.',
+  180: 'En 180° el servo está al máximo. El pulso es largo: ~2500 µs.'
+};
+
+function updateSim(val) {
+  const angle = parseInt(val);
+  const rot = angle - 90;
+  document.getElementById('sim-arm').style.transform = `translateX(-7px) rotate(${rot}deg)`;
+  document.getElementById('arm-label').textContent = angle + '°';
+  document.getElementById('angle-display').innerHTML = angle + '<span>°</span>';
+
+  const pulse = Math.round(500 + (angle / 180) * 2000);
+  document.getElementById('pwm-pulse').textContent = pulse + ' µs';
+
+  let pos = 'Centro';
+  if      (angle <= 20)  pos = 'Izquierda total';
+  else if (angle <= 80)  pos = 'Izquierda';
+  else if (angle <= 100) pos = 'Centro';
+  else if (angle <= 160) pos = 'Derecha';
+  else                   pos = 'Derecha total';
+  document.getElementById('pwm-pos').textContent = pos;
+
+  const snap = [0,45,90,135,180].reduce((a,b) => Math.abs(b-angle)<Math.abs(a-angle)?b:a);
+  if (Math.abs(snap - angle) < 18) {
+    document.getElementById('sim-tip').textContent = tips[snap];
+  }
+}
+
+// ─── UTILS ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function showXP() {
+  const o = document.getElementById('xp-overlay');
+  o.classList.add('show');
+  setTimeout(() => o.classList.remove('show'), 1600);
+}
+</script>
+</body>
+</html>
